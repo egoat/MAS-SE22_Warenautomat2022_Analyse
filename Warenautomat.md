@@ -41,7 +41,7 @@ rectangle {
 |**Auslösender Aktor**      | Kunde
 |**Zweck / Ziel**           | Kunde wählt gewünschte Ware und kann sie mit Münzen kaufen.
 |**Eingehende Information** | geöffnetes Fach, Münzeinwurf
-|**Ergebnis**               | Der Kunde kann das Produkt aus dem Fach entnehmen. Der Automat gibt korrektes Rückgeld.
+|**Ergebnis**               | Der Kunde kann die Ware aus dem Fach entnehmen. Der Automat gibt korrektes Rückgeld.
 |**Grundlegender Ablauf**   |
 |                           | 1. Kunde drückt auf Drehknopf.
 |                           | 2. Automat dreht alle  Drehteller einen Schritt nach rechts.
@@ -54,9 +54,9 @@ rectangle {
 |                           | 9. Automat prüft korrekten Betrag
 |                           | 10. Automat prüft ob Wechselgeld vorhanden
 |                           | 11. Automat entriegelt Schiebetür
-|                           | 12. Kunde öffnet Tür und entnimmt Produkt
+|                           | 12. Kunde öffnet Tür und entnimmt Ware
 |                           | 13. Automat aktualisiert Statuszeige
-|                           | 14. Automat aktualisiert interne Statistik (Produkt)
+|                           | 14. Automat aktualisiert interne Statistik (Ware)
 |                           | 15. Automat aktualisiert Anzeige Geldbetrag
 |                           | 16. Kunde schliesst Schiebetür
 |                           | 17. Automat verriegelt Schiebetür
@@ -69,7 +69,7 @@ rectangle {
 |                           | 9a [nicht genug Geld eingeworfen] Anezige "nicht genug Geld" wird angezeigt. Schiebetür bleibt geschlossen.
 |                           | 10a [kein Wechselgeld vorhanden] Anzeige "kein Wechselgeld" wird angezeigt. Schiebetür bleibt geschlossen.
 |                           | 16a [Kunde schliesst Schiebetür nicht] Drehteller können nicht gedreht werden.
-|                           | 18a [Kunde wählt ein weiteres Produkt] Zurück zu 1.
+|                           | 18a [Kunde wählt eine weitere Ware] Zurück zu 1.
 
 ---
 
@@ -81,11 +81,11 @@ skinparam classFontSize 15
 skinparam classAttributeFontSize 15
 skinparam arrowFontSize 20
 
-class "Automat" as A {
+class Automat {
     drehen(): void
 }
 
-class "Drehteller" as D {
+class Drehteller {
     istOffen: Boolean
     istVerriegelt: Boolean
     öffnen(): Boolean
@@ -94,59 +94,90 @@ class "Drehteller" as D {
     neueWareVonBarcodeLeser(Warenname: String, Preis: Fixed(2,2), Verfallsdatum: Date): void
 }
 
-class "Fach" as F {
+
+class Fach {
     istGefüllt: Boolean
 }
 
-
-class "Produkt" as P {
+class Ware {
     Name: String
     Preis: Double
     Verfallsdatum: Date
 }
 
-class "Log" as L {
-
+class Log {
 }
 
-class "Kaufeintrag" as E {
+class Kaufeintrag {
     datum: Date
-
-
 }
 
-class "Kasse" as K {
-    Anz10Rappen: Integer
-    Anz20Rappen: Integer
-    Anz50Rappen: Integer
-    Anz1Franken: Integer
-    Anz2Franken: Integer
-
+class Kasse {
     MünzeAddieren()
-    
-
 }
 
-class "Drehtelleranzeige" as DAZ {
+class MuenzSaeule {
+    Wert : Fixed [1,2]
+    Anzahl : UInteger
+}
+
+class Drehtelleranzeige {
     Warenpreis: Fixed [1,2]
     Status: UInteger
 
 }
 
+class ServicePanel{}
 
+abstract "AnzeigeGruppe {abstract}"{
+    Anzeige1: Anzeige
+    Anzeige2: Anzeige
+    Anzeige3: Anzeige
+    AuswahlKnopf: Knopf
+}
 
+abstract Anzeige{
+    Text: String
+}
 
-A "1" -- "1" L
-A "1" -- "1" K
-L "1" -- "0..*" E
+class Knopf{
+    onDrueckeKnopf(): void
+}
 
-A "1" -- "7" D
-D "1" -- "16" F
-F "1" -- "0..1" P
+class MuenzVerwaltungAnzeigeGruppe{
+    BestaetigungsKnopf: Knopf
+    zeigeWert(Fixed[5,2]): void
+    zeigeMuenzArt(int wert): void
+    zeigeAnzahl(int anzahl): void
+}
 
-D -- DAZ
+class WarenVerwaltungAnzeigeGruppe{
+    zeigeWare(Ware ware): void
+    zeigePreis(Fixed[1,2] preis): void
+    zeigeAnzahl(int anzahl)
+}
 
-P "1" -- "0..1" E
+class StatistikAnzeigeGruppe {
+    zeigeWare(Ware ware) : void
+    zeigeDatum(Date datum) : void
+
+}
+
+Automat "1" -- "7" Drehteller
+Drehteller "1" -- "16" Fach
+Fach "1" -- "0..1" Ware
+Automat "1" -- "1" Log
+Log "1" -- "0..*" Kaufeintrag
+Ware "1" -- "0..1" Kaufeintrag
+Automat "1" -- "1" Kasse
+Kasse "1" -- "5" MuenzSaeule
+Drehteller -- Drehtelleranzeige
+Automat -- ServicePanel
+ServicePanel "1" -- "3" "AnzeigeGruppe {abstract}"
+"AnzeigeGruppe {abstract}" "1" -- "3" Anzeige
+"AnzeigeGruppe {abstract}" <|- MuenzVerwaltungAnzeigeGruppe
+"AnzeigeGruppe {abstract}" <|- WarenVerwaltungAnzeigeGruppe
+"AnzeigeGruppe {abstract}" <|- StatistikAnzeigeGruppe
 
 @enduml
 ```
