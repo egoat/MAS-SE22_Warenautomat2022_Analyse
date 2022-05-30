@@ -40,7 +40,7 @@ rectangle {
 |**Use Case Name**          | Ware kaufen
 |**Auslösender Aktor**      | Kunde
 |**Zweck / Ziel**           | Kunde wählt gewünschte Ware und kann sie mit Münzen kaufen.
-|**Eingehende Information** | geöffnetes Fach, Münzeinwurf
+|**Eingehende Information** | geöffnetes Fach, Münzeinwurf, Drehknopf drücken, Restgeldknopf drücken
 |**Ergebnis**               | Der Kunde kann die Ware aus dem Fach entnehmen. Der Automat gibt korrektes Rückgeld.
 |**Grundlegender Ablauf**   |
 |                           | 1. Kunde drückt auf Drehknopf.
@@ -66,6 +66,7 @@ rectangle {
 |                           | 21. Kunde entnimmt Rückgeld
 |**Erweiterungen**          | -
 |**Alternativen**           | 5a [Münzsäule voll] Eingeworfene Münze wird wieder ausgegeben.
+|                           | 8a [abgelaufen, leer] Schiebetür bleibt geschlossen.
 |                           | 9a [nicht genug Geld eingeworfen] Anezige "nicht genug Geld" wird angezeigt. Schiebetür bleibt geschlossen.
 |                           | 10a [kein Wechselgeld vorhanden] Anzeige "kein Wechselgeld" wird angezeigt. Schiebetür bleibt geschlossen.
 |                           | 16a [Kunde schliesst Schiebetür nicht] Drehteller können nicht gedreht werden.
@@ -86,6 +87,7 @@ skinparam arrowFontSize 20
 
 class Automat {
     drehen(): void
+    istInServicemode : Boolean
     Kaufeintraege: Kaufeintrag[]
 }
 
@@ -101,7 +103,6 @@ class Drehteller {
 
 
 class Fach {
-    istGefüllt: Boolean
     LinkerNachbar: Fach
 }
 
@@ -109,6 +110,7 @@ class Ware {
     Name: String
     Preis: Double
     Verfallsdatum: Date
+    ware(preis: Double, name: String, verfallsdatum: Date) : Ware
 }
 
 class Kaufeintrag {
@@ -118,11 +120,15 @@ class Kaufeintrag {
 
 class Kasse {
     addiereMuenze(muenzSaeule: MuenzSaeule) : UInteger
+    entferneGemerkt() : void
 }
 
 class MuenzSaeule {
     Wert : Fixed [1,2]
+    Merken: UInteger
     Anzahl : UInteger
+    addiereMuenze() : void
+    entferneGemerkte() : void
 }
 
 class Drehtelleranzeige {
@@ -137,7 +143,14 @@ class BedienPanel{
     zurueckgebenGeld() : void
 }
 
-class ServicePanel{}
+class ServicePanel{
+    öffnePanel() : void
+    schliessePanel() : void
+    hinzufuegenMuenze(münzWert: Fixed [1,2], Anzahl: Integer) : Integer
+    anzeigenGesamtanzahl() : UInteger
+    auffüllenWare(preis: Double, name: String, verfallsdatum: Date) : void
+    ausgebenStatistik(wahrenbezeichnung: String, Datum: Date) : UInteger
+}
 
 abstract "AnzeigeGruppe {abstract}"{
     Anzeige1: Anzeige
@@ -192,9 +205,9 @@ Automat -- BedienPanel
 BedienPanel "1" -- "1" Anzeige
 BedienPanel "1" -- "2" Lampe
 "AnzeigeGruppe {abstract}" "1" -- "3" Anzeige
-"AnzeigeGruppe {abstract}" <|- WechselgeldbestandAnzeigeGruppe
-"AnzeigeGruppe {abstract}" <|- WarenVerwaltungAnzeigeGruppe
-"AnzeigeGruppe {abstract}" <|- VerkaufserfolgAnzeigeGruppe
+"AnzeigeGruppe {abstract}" <|-- WechselgeldbestandAnzeigeGruppe
+"AnzeigeGruppe {abstract}" <|-- WarenVerwaltungAnzeigeGruppe
+"AnzeigeGruppe {abstract}" <|-- VerkaufserfolgAnzeigeGruppe
 
 @enduml
 ```
@@ -235,23 +248,6 @@ activate Automat
     deactivate D
     deactivate Automat
     
-
-Kundin -> Automat : einwerfenGeld(2)
-    activate Automat
-    Automat -> Automat : prüfeGeld()
-    Automat -> Kasse   : prüfeWechselgeld()
-    activate Kasse
-    Kasse --> Automat : WechselgeldVorhanden()
-    
-    Automat  -> Kasse : transeferiereGeld()
-    Kasse -> Kasse : merkeGeld()
-    Kasse -> Kasse : addiereMünze()
-   
-    Kasse -> GA : zeigeBetrag
-    activate GA
-    deactivate GA
-    deactivate Kasse
-    deactivate Automat
 
 Kundin -> Automat : einwerfenGeld(2)
     activate Automat
