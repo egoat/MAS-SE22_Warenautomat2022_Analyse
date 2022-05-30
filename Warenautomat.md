@@ -182,55 +182,186 @@ ServicePanel "1" -- "3" "AnzeigeGruppe {abstract}"
 @enduml
 ```
 
-## UML-Squenzdiagramme
+### 4.2.2 Objektdiagramm
+
+### 4.2.3 Squenzdiagramme
+
+#### a) Waren kaufen
+
+```plantuml
+@startuml
+mainframe **   Ware kaufen   **
+
+actor "Kundin" as Kundin
+participant ":Automat" as Automat 
+participant ":Kasse" as Kasse 
+participant ":Geldanzeige" as GA 
+participant ":Drehteller" as DT
+participant ":Fach" as Fach  
+participant ":Ware" as Ware
+participant ":Kaufeintrag" as KE
+participant ":Log" as Log
+participant ":Drehtelleranzeige" as D
+participant ":Wechselgeldanzeige" as WAZ
+participant ":NichtGenugGeldAnzeige" as NGGAZ
+ 
+
+Kundin -> Automat : drückeDrehknopf()
+activate Automat
+    Automat -> DT : drehen()
+
+    activate DT
+    DT -> D : zeigeWarenPreis(1.5)
+    activate D
+    DT -> D : zeigeStatus(grün,rot,ausgeschaltet)
+    deactivate DT
+    deactivate D
+    deactivate Automat
+    
+
+Kundin -> Automat : einwerfenGeld(2)
+    activate Automat
+    Automat -> Automat : prüfeGeld()
+    Automat -> Kasse   : prüfeWechselgeld()
+    activate Kasse
+    Kasse --> Automat : WechselgeldVorhanden()
+    
+    Automat  -> Kasse : transeferiereGeld()
+    Kasse -> Kasse : merkeGeld()
+    Kasse -> Kasse : addiereMünze()
+   
+    Kasse -> GA : zeigeBetrag
+    activate GA
+    deactivate GA
+    deactivate Kasse
+    deactivate Automat
+
+Kundin -> Automat : einwerfenGeld(2)
+    activate Automat
+    Automat -> Automat : prüfeGeld()
+    Automat -> Kasse   : prüfeWechselgeld()
+    activate Kasse
+    Kasse --> Automat : WechselgeldVorhanden()
+    
+    Automat  -> Kasse : transeferiereGeld()
+    Kasse -> Kasse : merkeGeld()
+    Kasse -> Kasse : addiereMünze()
+   
+    Kasse -> GA : zeigeBetrag
+    activate GA
+    deactivate GA
+    deactivate Kasse
+    deactivate Automat
+
+Kundin -> Automat : einwerfenGeld(0.5)
+    activate Automat
+    Automat -> Automat : prüfeGeld()
+    Automat -> Kasse   : prüfeWechselgeld()
+    activate Kasse
+    Kasse --> Automat : WechselgeldVorhanden()
+    
+    Automat  -> Kasse : transeferiereGeld()
+    Kasse -> Kasse : merkeGeld()
+    Kasse -> Kasse : addiereMünze()
+   
+    Kasse -> GA : zeigeBetrag
+    activate GA
+    deactivate GA
+    deactivate Kasse
+    deactivate Automat
+
+Kundin -> DT : oeffneFach()
+    activate DT
+    DT -> Kasse : "PrüfungOK(WechselGeld, GenugGeld)"
+        activate Kasse
+        DT <- Kasse : "AntwortPrüfung(OK,OK)
+        deactivate Kasse
+
+    DT -> WAZ : melden(-)
+        activate WAZ
+        deactivate WAZ
+
+    DT -> NGGAZ : melden(-)
+        activate NGGAZ
+        deactivate NGGAZ
+
+    DT -> Fach :entriegeln()
+        activate Fach
+        Fach -> Fach : istGefüllt(-)
+        Fach -> Ware : produktVerkauft(TellerNr,PositionNr)
+            activate Ware
+            Ware -> KE : macheEintrag()
+                activate KE
+                KE -> Log : erfasseStatistik()
+                    activate Log
+                    deactivate Log
+                deactivate KE
+            deactivate Ware
+        deactivate Fach
+
+    DT -> Kasse : resetStatistik()
+        activate Kasse
+        Kasse -> GA : anzeigenBetrag(1.00)
+            activate GA
+            deactivate GA
+        deactivate Kasse
+    deactivate DT
+    
+
+Kundin -> DT : schliesseFach()
+    activate DT
+    deactivate DT
+   
+Kundin -> DT : oeffneFach()
+    activate DT
+    DT -> Kasse : PrüfungOK(WechselGeld, GenugGeld)
+        activate Kasse
+        Kasse -> DT : AntwortPrüfung(OK,NOK)
+        deactivate Kasse
+    DT -> WAZ : melden(-)
+    DT -> NGGAZ : melden(+)
+    deactivate DT
+
+Kundin -> Automat : drückeRückgabeKnopf
+    activate Automat
+   Automat -> Kasse : aufbereitenRestgeld(1.00)
+        activate Kasse
+        Kasse -> GA : zeigeBetrag(0.00)
+            activate GA
+            deactivate GA
+        deactivate Kasse
+    Automat --> Kundin : ausgebenRestgeld(1.00,-1 GR in Bestand)
+
+@enduml
+```
+
+#### b) Warenwert des Automaten berechnen
 
 ```plantuml
 @startuml
 
-actor " " as B
-participant ":Auftrag" as A
-participant ":Auftragsposition" as P
-participant ":Maschine" as M
-participant ":Kunde" as K
+mainframe ** Warenwert des Automaten berechnen **
 
-activate B
+actor "Service" as Service
+participant ":ServicePanel" as ServicePanel
 
-B -> A : berechneKosten()
-activate A
-
-loop 1..*
-    A -> P : getStückzahl()
-    activate P
-    A <-- P : Stückzahl
-    deactivate P
-
-    A -> P : getMaschine()
-    activate P
-    A <-- P : M
-    deactivate P
-
-    A -> M : getMaschinenleistung()
-    activate M
-    A <-- M : Leistung
-    deactivate M
-
-    A -> M : getKostenProStunde()
-    activate M
-    A <-- M : Kosten
-    deactivate M
-end
-
-A -> K : getBestanskunde()
-activate K
-A <-- K : istBestandskunde
-deactivate K
-
-opt "ist Bestandskunde"
-    A -> A : berechneRabatt(istBestandskunde)
-end
-
-B <-- A : Kosten
-deactivate A
+Service -> ServicePanel : öffnePanel
+activate ServicePanel
+    participant ":WechselgeldbestandAnzeigeGruppe" as WechselgeldbestandAnzeigeGruppe
+    ServicePanel -> WechselgeldbestandAnzeigeGruppe : zeigeGesamtwert()
+    activate WechselgeldbestandAnzeigeGruppe
+        participant ":Ware" as Ware
+        loop Ware in Waren
+            WechselgeldbestandAnzeigeGruppe -> Ware : getPreis()
+                activate Ware
+                WechselgeldbestandAnzeigeGruppe <-- Ware : preis
+                deactivate Ware
+            WechselgeldbestandAnzeigeGruppe -> WechselgeldbestandAnzeigeGruppe : add(preis)
+                activate WechselgeldbestandAnzeigeGruppe
+                deactivate WechselgeldbestandAnzeigeGruppe
+        end
+    deactivate WechselgeldbestandAnzeigeGruppe
+deactivate ServicePanel
 
 @enduml
 ```
