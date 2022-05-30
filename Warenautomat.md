@@ -87,53 +87,56 @@ skinparam arrowFontSize 20
 
 class Automat {
     drehen(): void
-    istInServicemode : Boolean
-    Kaufeintraege: Kaufeintrag[]
 }
 
 class Drehteller {
     istOffen: Boolean
     öffnen(): Boolean
-    schliessen(): void
     entriegeln(): void
-    Fach: Fach
+    schliessen(): void
+    AktuellesFach: Fach
     neueWareVonBarcodeLeser(Warenname: String, Preis: Fixed(2,2), Verfallsdatum: Date): void
-    drehen(Fach) : Fach
+    drehen() : void
+    Drehteller(in AktuellesFach: Fach)
 }
 
 
 class Fach {
     LinkerNachbar: Fach
+    Fach(in LinkerNachbar: Fach)
 }
 
 class Ware {
     Name: String
     Preis: Double
     Verfallsdatum: Date
-    ware(preis: Double, name: String, verfallsdatum: Date) : Ware
+    Ware(in Preis: Double, in Name: String, in Verfallsdatum: Date) : Ware
 }
 
 class Kaufeintrag {
     Ware: Ware
-    Datum: Date
+    Verkaufsdatum: Date
+    Kaufeintrag(in Ware: Ware, in Verkaufsdatum: Date)
 }
 
 class Kasse {
     addiereMuenze(muenzSaeule: MuenzSaeule) : UInteger
-    entferneGemerkt() : void
+    entferneEingeworfenes() : void
+    einwerfen(Fixed [1,2]) : Boolean
 }
 
 class MuenzSaeule {
     Wert : Fixed [1,2]
-    Merken: UInteger
+    AnzahlEingeworfen: UInteger
     Anzahl : UInteger
-    addiereMuenze() : void
-    entferneGemerkte() : void
+    addiereMünze() : void
+    entferneEingeworfenes() : void
 }
 
 class Drehtelleranzeige {
-    Anzeige: Anzeige
-    Lampe: Lampe
+    Preis: Anzeige
+    Warenzustand: Lampe
+    anzeigen(Ware) : void
 }
 
 class BedienPanel{
@@ -144,11 +147,10 @@ class BedienPanel{
 }
 
 class ServicePanel{
-    öffnePanel() : void
-    schliessePanel() : void
+    öffnen() : void
+    schliessen() : void
     hinzufuegenMuenze(münzWert: Fixed [1,2], Anzahl: Integer) : Integer
     anzeigenGesamtanzahl() : UInteger
-    auffüllenWare(preis: Double, name: String, verfallsdatum: Date) : void
     ausgebenStatistik(wahrenbezeichnung: String, Datum: Date) : UInteger
 }
 
@@ -158,19 +160,23 @@ abstract "AnzeigeGruppe {abstract}"{
     Anzeige3: Anzeige
 }
 
-abstract Anzeige{
+class Anzeige{
     Text: String
-    zeigen(text: String)
+    anzeigen(Text: String)
 }
 
 class Lampe {
     Leuchtet: Boolean
     Farbe: String[6]
+    ausschalten() : void
+    zeigeWeiss() : void
+    zeigeGrün() : void
+    zeigeRot() : void
+
 }
 
 
 class WechselgeldbestandAnzeigeGruppe{
---    BestaetigungsKnopf: Knopf
     zeigeWert(wert: Fixed[5,2]): void
     zeigeMuenzArt(wert: int): void
     zeigeAnzahl(anzahl: int): void
@@ -223,125 +229,122 @@ BedienPanel "1" -- "2" Lampe
 mainframe **   Ware kaufen   **
 
 actor "Kundin" as Kundin
-participant ":Automat" as Automat 
-participant ":Kasse" as Kasse 
-participant ":Geldanzeige" as GA 
-participant ":Drehteller" as DT
-participant ":Fach" as Fach  
-participant ":Ware" as Ware
-participant ":Kaufeintrag" as KE
-participant ":Log" as Log
-participant ":Drehtelleranzeige" as D
-participant ":Wechselgeldanzeige" as WAZ
-participant ":NichtGenugGeldAnzeige" as NGGAZ
  
-
-Kundin -> Automat : drückeDrehknopf()
+participant ":Automat" as Automat 
+Kundin -> Automat : drehen()
 activate Automat
-    Automat -> DT : drehen()
-
-    activate DT
-    DT -> D : zeigeWarenPreis(1.5)
-    activate D
-    DT -> D : zeigeStatus(grün,rot,ausgeschaltet)
-    deactivate DT
-    deactivate D
+    participant ":Drehteller" as Drehteller
+    Automat -> Drehteller : drehen()
+        activate Drehteller
+        participant ":Fach" as Fach
+        Drehteller -> Fach : getWare()
+        activate Fach
+        deactivate Fach
+        participant ":Drehtelleranzeige" as Drehtelleranzeige
+        Drehteller -> Drehtelleranzeige : anzeigen(Ware)
+        activate Drehtelleranzeige
+            participant ":Ware" as Ware
+            Drehtelleranzeige -> Ware : getPreis()
+            activate Ware
+            deactivate Ware
+            Drehtelleranzeige -> Ware : getVerfallsdatum()
+            activate Ware
+            deactivate Ware
+            participant ":Anzeige" as Anzeige
+            Drehtelleranzeige -> Anzeige : anzeigen("1.50")
+            activate Anzeige
+            deactivate Anzeige
+            participant ":Lampe" as Lampe
+            Drehtelleranzeige -> Lampe : zeigeGrün()
+            activate Lampe
+            deactivate Lampe
+        deactivate Drehteller
+        deactivate Drehtelleranzeige
     deactivate Automat
     
-
-Kundin -> Automat : einwerfenGeld(2)
-    activate Automat
-    Automat -> Automat : prüfeGeld()
-    Automat -> Kasse   : prüfeWechselgeld()
-    activate Kasse
-    Kasse --> Automat : WechselgeldVorhanden()
-    
-    Automat  -> Kasse : transeferiereGeld()
-    Kasse -> Kasse : merkeGeld()
-    Kasse -> Kasse : addiereMünze()
-   
-    Kasse -> GA : zeigeBetrag
-    activate GA
-    deactivate GA
-    deactivate Kasse
-    deactivate Automat
-
-Kundin -> Automat : einwerfenGeld(0.5)
-    activate Automat
-    Automat -> Automat : prüfeGeld()
-    Automat -> Kasse   : prüfeWechselgeld()
-    activate Kasse
-    Kasse --> Automat : WechselgeldVorhanden()
-    
-    Automat  -> Kasse : transeferiereGeld()
-    Kasse -> Kasse : merkeGeld()
-    Kasse -> Kasse : addiereMünze()
-   
-    Kasse -> GA : zeigeBetrag
-    activate GA
-    deactivate GA
-    deactivate Kasse
-    deactivate Automat
-
-Kundin -> DT : oeffneFach()
-    activate DT
-    DT -> Kasse : "PrüfungOK(WechselGeld, GenugGeld)"
+participant ":Kasse" as Kasse
+Kundin -> Kasse : einwerfen(2)
         activate Kasse
-        DT <- Kasse : "AntwortPrüfung(OK,OK)
+        Kasse -> Kasse : prüfeGeld()
+        Kasse  -> Kasse : transeferiereGeld()
+        Kasse -> Kasse : merkeGeld()
+        Kasse -> Kasse : addiereMünze()
+        participant ":Geldanzeige" as Geldanzeige
+        Kasse -> Geldanzeige : zeigeBetrag
+            activate Geldanzeige
+            deactivate Geldanzeige
+        deactivate Kasse
+    deactivate Automat
+
+Kundin -> Kasse : einwerfen(0.5)
+        activate Kasse
+        Kasse -> Kasse : prüfeGeld()
+        Kasse  -> Kasse : transeferiereGeld()
+        Kasse -> Kasse : merkeGeld()
+        Kasse -> Kasse : addiereMünze()
+        Kasse -> Geldanzeige : zeigeBetrag
+            activate Geldanzeige
+            deactivate Geldanzeige
+        deactivate Kasse
+    deactivate Automat
+
+Kundin -> Drehteller : öffnen()
+    activate Drehteller
+    Drehteller -> Kasse : "PrüfungOK(WechselGeld, GenugGeld)"
+        activate Kasse
+        Drehteller <- Kasse : "AntwortPrüfung(OK,OK)
         deactivate Kasse
 
-    DT -> WAZ : melden(-)
-        activate WAZ
-        deactivate WAZ
+    Drehteller -> Lampe : melden(-)
+        activate Lampe
+        deactivate Lampe
 
-    DT -> NGGAZ : melden(-)
-        activate NGGAZ
-        deactivate NGGAZ
+    Drehteller -> Lampe : melden(-)
+        activate Lampe
+        deactivate Lampe
 
-    DT -> Fach :entriegeln()
+    Drehteller -> Fach :entriegeln()
         activate Fach
         Fach -> Fach : istGefüllt(-)
         Fach -> Ware : produktVerkauft(TellerNr,PositionNr)
             activate Ware
-            Ware -> KE : macheEintrag()
-                activate KE
-                KE -> Log : erfasseStatistik()
-                    activate Log
-                    deactivate Log
-                deactivate KE
+            participant ":Kaufeintrag" as Kaufeintrag
+            Ware -> Kaufeintrag : macheEintrag()
+                activate Kaufeintrag
+                deactivate Kaufeintrag
             deactivate Ware
         deactivate Fach
 
-    DT -> Kasse : resetStatistik()
+    Drehteller -> Kasse : resetStatistik()
         activate Kasse
-        Kasse -> GA : anzeigenBetrag(1.00)
-            activate GA
-            deactivate GA
+        Kasse -> Geldanzeige : anzeigenBetrag(1.00)
+            activate Geldanzeige
+            deactivate Geldanzeige
         deactivate Kasse
-    deactivate DT
+    deactivate Drehteller
     
 
-Kundin -> DT : schliesseFach()
-    activate DT
-    deactivate DT
+Kundin -> Drehteller : schliesseFach()
+    activate Drehteller
+    deactivate Drehteller
    
-Kundin -> DT : oeffneFach()
-    activate DT
-    DT -> Kasse : PrüfungOK(WechselGeld, GenugGeld)
+Kundin -> Drehteller : oeffneFach()
+    activate Drehteller
+    Drehteller -> Kasse : PrüfungOK(WechselGeld, GenugGeld)
         activate Kasse
-        Kasse -> DT : AntwortPrüfung(OK,NOK)
+        Kasse -> Drehteller : AntwortPrüfung(OK,NOK)
         deactivate Kasse
-    DT -> WAZ : melden(-)
-    DT -> NGGAZ : melden(+)
-    deactivate DT
+    Drehteller -> Lampe : melden(-)
+    Drehteller -> Lampe : melden(+)
+    deactivate Drehteller
 
 Kundin -> Automat : drückeRückgabeKnopf
     activate Automat
    Automat -> Kasse : aufbereitenRestgeld(1.00)
         activate Kasse
-        Kasse -> GA : zeigeBetrag(0.00)
-            activate GA
-            deactivate GA
+        Kasse -> Geldanzeige : zeigeBetrag(0.00)
+            activate Geldanzeige
+            deactivate Geldanzeige
         deactivate Kasse
     Automat --> Kundin : ausgebenRestgeld(1.00,-1 GR in Bestand)
 
