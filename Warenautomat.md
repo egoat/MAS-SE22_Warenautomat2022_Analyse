@@ -75,6 +75,9 @@ rectangle {
 
 ## Aufgabe 2: Statisches und dynamisches Modell
 
+
+### 4.2.1/4.2.2 Klassendiagram
+
 ```plantuml
 @startuml
 skinparam classFontSize 15
@@ -83,20 +86,23 @@ skinparam arrowFontSize 20
 
 class Automat {
     drehen(): void
+    Kaufeintraege: Kaufeintrag[]
 }
 
 class Drehteller {
     istOffen: Boolean
-    istVerriegelt: Boolean
     öffnen(): Boolean
     schliessen(): void
     entriegeln(): void
+    Fach: Fach
     neueWareVonBarcodeLeser(Warenname: String, Preis: Fixed(2,2), Verfallsdatum: Date): void
+    drehen(Fach) : Fach
 }
 
 
 class Fach {
     istGefüllt: Boolean
+    LinkerNachbar: Fach
 }
 
 class Ware {
@@ -105,15 +111,13 @@ class Ware {
     Verfallsdatum: Date
 }
 
-class Log {
-}
-
 class Kaufeintrag {
-    datum: Date
+    Ware: Ware
+    Datum: Date
 }
 
 class Kasse {
-    MünzeAddieren()
+    addiereMuenze(muenzSaeule: MuenzSaeule) : UInteger
 }
 
 class MuenzSaeule {
@@ -122,9 +126,15 @@ class MuenzSaeule {
 }
 
 class Drehtelleranzeige {
-    Warenpreis: Fixed [1,2]
-    Status: UInteger
+    Anzeige: Anzeige
+    Lampe: Lampe
+}
 
+class BedienPanel{
+    Geldbetrag: Anzeige
+    StatusWechselgeld: Lampe
+    StatusGenugGeld: Lampe
+    zurueckgebenGeld() : void
 }
 
 class ServicePanel{}
@@ -133,51 +143,58 @@ abstract "AnzeigeGruppe {abstract}"{
     Anzeige1: Anzeige
     Anzeige2: Anzeige
     Anzeige3: Anzeige
-    AuswahlKnopf: Knopf
 }
 
 abstract Anzeige{
     Text: String
+    zeigen(text: String)
 }
 
-class Knopf{
-    onDrueckeKnopf(): void
+class Lampe {
+    Leuchtet: Boolean
+    Farbe: String[6]
 }
 
-class MuenzVerwaltungAnzeigeGruppe{
-    BestaetigungsKnopf: Knopf
-    zeigeWert(Fixed[5,2]): void
-    zeigeMuenzArt(int wert): void
-    zeigeAnzahl(int anzahl): void
+
+class WechselgeldbestandAnzeigeGruppe{
+--    BestaetigungsKnopf: Knopf
+    zeigeWert(wert: Fixed[5,2]): void
+    zeigeMuenzArt(wert: int): void
+    zeigeAnzahl(anzahl: int): void
+    zeigeGesamtwert() : void
 }
 
 class WarenVerwaltungAnzeigeGruppe{
-    zeigeWare(Ware ware): void
-    zeigePreis(Fixed[1,2] preis): void
-    zeigeAnzahl(int anzahl)
+    zeigeWare(ware: Ware): void
+    zeigePreis(preis: Fixed[1,2]): void
+    zeigeAnzahl(anzahl: int)
 }
 
-class StatistikAnzeigeGruppe {
-    zeigeWare(Ware ware) : void
-    zeigeDatum(Date datum) : void
-
+class VerkaufserfolgAnzeigeGruppe {
+    zeigeWare(ware: Ware) : void
+    zeigeDatum(datum: Date) : void
 }
 
 Automat "1" -- "7" Drehteller
 Drehteller "1" -- "16" Fach
 Fach "1" -- "0..1" Ware
-Automat "1" -- "1" Log
-Log "1" -- "0..*" Kaufeintrag
+Fach  -- "linker Nachbar" Fach
+Automat "1" -- "0..*" Kaufeintrag
 Ware "1" -- "0..1" Kaufeintrag
 Automat "1" -- "1" Kasse
 Kasse "1" -- "5" MuenzSaeule
 Drehteller -- Drehtelleranzeige
+Drehtelleranzeige -- Lampe
+Drehtelleranzeige -- Anzeige
 Automat -- ServicePanel
 ServicePanel "1" -- "3" "AnzeigeGruppe {abstract}"
+Automat -- BedienPanel
+BedienPanel "1" -- "1" Anzeige
+BedienPanel "1" -- "2" Lampe
 "AnzeigeGruppe {abstract}" "1" -- "3" Anzeige
-"AnzeigeGruppe {abstract}" <|- MuenzVerwaltungAnzeigeGruppe
+"AnzeigeGruppe {abstract}" <|- WechselgeldbestandAnzeigeGruppe
 "AnzeigeGruppe {abstract}" <|- WarenVerwaltungAnzeigeGruppe
-"AnzeigeGruppe {abstract}" <|- StatistikAnzeigeGruppe
+"AnzeigeGruppe {abstract}" <|- VerkaufserfolgAnzeigeGruppe
 
 @enduml
 ```
