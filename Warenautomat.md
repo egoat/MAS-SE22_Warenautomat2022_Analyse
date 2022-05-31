@@ -87,6 +87,9 @@ skinparam arrowFontSize 20
 
 class Automat {
     drehen(): void
+    einwerfen() : void
+    zeigeGesamtbetrag(Gesamtbetrag: Double) : void
+    prüfeSchiebetürenGeschlossen() : Boolean
 }
 
 class Drehteller {
@@ -98,6 +101,7 @@ class Drehteller {
     neueWareVonBarcodeLeser(Warenname: String, Preis: Fixed(2,2), Verfallsdatum: Date): void
     drehen() : void
     Drehteller(in AktuellesFach: Fach)
+    gibGesamtwarenWert() : Double
 }
 
 
@@ -111,6 +115,8 @@ class Ware {
     Preis: Double
     Verfallsdatum: Date
     Ware(in Preis: Double, in Name: String, in Verfallsdatum: Date) : Ware
+    gibAktuellenWert() : Double
+    istAbgelaufen() : Boolean
 }
 
 class Kaufeintrag {
@@ -120,17 +126,20 @@ class Kaufeintrag {
 }
 
 class Kasse {
-    addiereMuenze(muenzSaeule: MuenzSaeule) : UInteger
-    entferneEingeworfenes() : void
+    Gesamtbetrag: Double
+    setzteAnzahlEingeworfen() : void
     einwerfen(Fixed [1,2]) : Boolean
+    prüfeEingeworfeneMünze() : Boolean
+    gibGeldZurück() : void
+    prüfeKaufOk(Ware: Ware) : Boolean
 }
 
 class MuenzSaeule {
     Wert : Fixed [1,2]
     AnzahlEingeworfen: UInteger
     Anzahl : UInteger
-    addiereMünze() : void
-    entferneEingeworfenes() : void
+    addiereMünze() : Boolean
+    setzeAnzahlEingeworfen() : void
 }
 
 class Drehtelleranzeige {
@@ -139,18 +148,19 @@ class Drehtelleranzeige {
     anzeigen(Ware) : void
 }
 
-class BedienPanel{
+class GeldbetragStatusAnzeige{
     Geldbetrag: Anzeige
     StatusWechselgeld: Lampe
     StatusGenugGeld: Lampe
     zurueckgebenGeld() : void
+    zeigeGesamtbetrag(Gesamtbetrag: Double) : void
 }
 
-class ServicePanel{
+class BedienAnzeigePanel{
     öffnen() : void
     schliessen() : void
     hinzufuegenMuenze(münzWert: Fixed [1,2], Anzahl: Integer) : Integer
-    anzeigenGesamtanzahl() : UInteger
+    anzeigenGesamtwarenWert() : Double
     ausgebenStatistik(wahrenbezeichnung: String, Datum: Date) : UInteger
 }
 
@@ -177,21 +187,20 @@ class Lampe {
 
 
 class WechselgeldbestandAnzeigeGruppe{
-    zeigeWert(wert: Fixed[5,2]): void
+    zeigeWertVerkaufteWare(wert: Fixed[5,2]): void
     zeigeMuenzArt(wert: int): void
     zeigeAnzahl(anzahl: int): void
-    zeigeGesamtwert() : void
+    zeigeGesamtwert(Gesamtbetrag: Double) : void
 }
 
 class WarenVerwaltungAnzeigeGruppe{
-    zeigeWare(ware: Ware): void
-    zeigePreis(preis: Fixed[1,2]): void
-    zeigeAnzahl(anzahl: int)
+    zeigeWare(ware: Ware)
 }
 
 class VerkaufserfolgAnzeigeGruppe {
     zeigeWare(ware: Ware) : void
-    zeigeDatum(datum: Date) : void
+    zeigeDatumPer(datum: Date) : void
+    zeigeAnzahl() : void
 }
 
 Automat "1" -- "7" Drehteller
@@ -205,11 +214,11 @@ Kasse "1" -- "5" MuenzSaeule
 Drehteller -- Drehtelleranzeige
 Drehtelleranzeige -- Lampe
 Drehtelleranzeige -- Anzeige
-Automat -- ServicePanel
-ServicePanel "1" -- "3" "AnzeigeGruppe {abstract}"
-Automat -- BedienPanel
-BedienPanel "1" -- "1" Anzeige
-BedienPanel "1" -- "2" Lampe
+Automat -- BedienAnzeigePanel
+BedienAnzeigePanel "1" -- "3" "AnzeigeGruppe {abstract}"
+Automat -- GeldbetragStatusAnzeige
+GeldbetragStatusAnzeige "1" -- "1" Anzeige
+GeldbetragStatusAnzeige "1" -- "2" Lampe
 "AnzeigeGruppe {abstract}" "1" -- "3" Anzeige
 "AnzeigeGruppe {abstract}" <|-- WechselgeldbestandAnzeigeGruppe
 "AnzeigeGruppe {abstract}" <|-- WarenVerwaltungAnzeigeGruppe
@@ -233,6 +242,7 @@ actor "Kundin" as Kundin
 participant ":Automat" as Automat 
 Kundin -> Automat : drehen()
 activate Automat
+    Automat -> Automat : prüfeSchiebetürenGeschlossen
     participant ":Drehteller" as Drehteller
     Automat -> Drehteller : drehen()
         activate Drehteller
@@ -247,7 +257,7 @@ activate Automat
             Drehtelleranzeige -> Ware : getPreis()
             activate Ware
             deactivate Ware
-            Drehtelleranzeige -> Ware : getVerfallsdatum()
+            Drehtelleranzeige -> Ware : istAbgelaufen()
             activate Ware
             deactivate Ware
             participant ":Anzeige" as Anzeige
@@ -262,38 +272,51 @@ activate Automat
         deactivate Drehtelleranzeige
     deactivate Automat
     
+Kundin -> Automat : einwerfen()
+activate Automat
 participant ":Kasse" as Kasse
-Kundin -> Kasse : einwerfen(2)
+Automat -> Kasse : einwerfen()
         activate Kasse
-        Kasse -> Kasse : prüfeGeld()
-        Kasse  -> Kasse : transeferiereGeld()
-        Kasse -> Kasse : merkeGeld()
-        Kasse -> Kasse : addiereMünze()
-        participant ":Geldanzeige" as Geldanzeige
-        Kasse -> Geldanzeige : zeigeBetrag
-            activate Geldanzeige
-            deactivate Geldanzeige
+        Kasse -> Kasse : prüfeEingeworfeneMünze
+        Kasse -> Automat : zeigeGesamtbetrag(Gesamtbetrag)
+        activate Automat
+        participant ":GeldbetragStatusAnzeige" as GeldbetragStatusAnzeige
+        Automat -> GeldbetragStatusAnzeige : zeigeGesamtbetrag(Gesamtbetrag)
+            activate GeldbetragStatusAnzeige
+            deactivate GeldbetragStatusAnzeige
+        deactivate Automat
         deactivate Kasse
     deactivate Automat
+    deactivate Automat
 
-Kundin -> Kasse : einwerfen(0.5)
+Kundin -> Automat : einwerfen()
+activate Automat
+participant ":Kasse" as Kasse
+Automat -> Kasse : einwerfen()
         activate Kasse
-        Kasse -> Kasse : prüfeGeld()
-        Kasse  -> Kasse : transeferiereGeld()
-        Kasse -> Kasse : merkeGeld()
-        Kasse -> Kasse : addiereMünze()
-        Kasse -> Geldanzeige : zeigeBetrag
-            activate Geldanzeige
-            deactivate Geldanzeige
+        Kasse -> Kasse : prüfeEingeworfeneMünze
+        Kasse -> Automat : zeigeGesamtbetrag(Gesamtbetrag)
+        activate Automat
+        participant ":GeldbetragStatusAnzeige" as GeldbetragStatusAnzeige
+        Automat -> GeldbetragStatusAnzeige : zeigeGesamtbetrag(Gesamtbetrag)
+            activate GeldbetragStatusAnzeige
+            deactivate GeldbetragStatusAnzeige
+        deactivate Automat
         deactivate Kasse
+    deactivate Automat
     deactivate Automat
 
 Kundin -> Drehteller : öffnen()
     activate Drehteller
-    Drehteller -> Kasse : "PrüfungOK(WechselGeld, GenugGeld)"
-        activate Kasse
-        Drehteller <- Kasse : "AntwortPrüfung(OK,OK)
-        deactivate Kasse
+    Drehteller -> Automat : prüfeSchiebetürenGeschlossen
+    activate Automat
+    deactivate Automat
+    Drehteller -> Fach : getWare()
+    activate Fach
+    deactivate Fach
+    Drehteller -> Kasse : prüfeKaufOk(Ware: Ware) : Boolean
+    activate Kasse
+    deactivate Kasse
 
     Drehteller -> Lampe : melden(-)
         activate Lampe
@@ -330,6 +353,10 @@ Kundin -> Drehteller : schliesseFach()
    
 Kundin -> Drehteller : oeffneFach()
     activate Drehteller
+    Drehteller -> Automat : prüfeSchiebetürenGeschlossen
+    activate Automat
+    deactivate Automat
+    Drehtell -> Fach : getWare()
     Drehteller -> Kasse : PrüfungOK(WechselGeld, GenugGeld)
         activate Kasse
         Kasse -> Drehteller : AntwortPrüfung(OK,NOK)
