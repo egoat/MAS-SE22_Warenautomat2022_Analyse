@@ -97,7 +97,7 @@ class Drehteller {
     öffnen(): Boolean
     entriegeln(): void
     schliessen(): void
-    AktuellesFach: Fach
+    aktuellesFach: Fach
     neueWareVonBarcodeLeser(Warenname: String, Preis: Fixed(2,2), Verfallsdatum: Date): void
     drehen() : void
     Drehteller(in AktuellesFach: Fach)
@@ -106,27 +106,27 @@ class Drehteller {
 
 
 class Fach {
-    LinkerNachbar: Fach
+    linkerNachbar: Fach
     Fach(in LinkerNachbar: Fach)
 }
 
 class Ware {
-    Name: String
-    Preis: Double
-    Verfallsdatum: Date
+    name: String
+    preis: Double
+    verfallsdatum: Date
     Ware(in Preis: Double, in Name: String, in Verfallsdatum: Date) : Ware
     gibAktuellenWert() : Double
     istAbgelaufen() : Boolean
 }
 
 class Kaufeintrag {
-    Ware: Ware
-    Verkaufsdatum: Date
+    ware: Ware
+    verkaufsdatum: Date
     Kaufeintrag(in Ware: Ware, in Verkaufsdatum: Date)
 }
 
 class Kasse {
-    Gesamtbetrag: Double
+    gesamtbetrag: Double
     setzteAnzahlEingeworfen() : void
     einwerfen(Fixed [1,2]) : Boolean
     prüfeEingeworfeneMünze() : Boolean
@@ -135,23 +135,23 @@ class Kasse {
 }
 
 class MuenzSaeule {
-    Wert : Fixed [1,2]
-    AnzahlEingeworfen: UInteger
-    Anzahl : UInteger
+    wert : Fixed [1,2]
+    anzahlEingeworfen: UInteger
+    anzahl : UInteger
     addiereMünze() : Boolean
     setzeAnzahlEingeworfen() : void
 }
 
 class Drehtelleranzeige {
-    Preis: Anzeige
-    Warenzustand: Lampe
+    preis: Anzeige
+    warenzustand: Lampe
     anzeigen(Ware) : void
 }
 
 class GeldbetragStatusAnzeige{
-    Geldbetrag: Anzeige
-    StatusWechselgeld: Lampe
-    StatusGenugGeld: Lampe
+    geldbetrag: Anzeige
+    statusWechselgeld: Lampe
+    statusGenugGeld: Lampe
     zurueckgebenGeld() : void
     zeigeGesamtbetrag(Gesamtbetrag: Double) : void
 }
@@ -165,18 +165,18 @@ class BedienAnzeigePanel{
 }
 
 abstract "AnzeigeGruppe {abstract}"{
-    Anzeige1: Anzeige
-    Anzeige2: Anzeige
-    Anzeige3: Anzeige
+    anzeige1: Anzeige
+    anzeige2: Anzeige
+    anzeige3: Anzeige
 }
 
 class Anzeige{
-    Text: String
+    text: String
     anzeigen(Text: String)
 }
 
 class Lampe {
-    Leuchtet: Boolean
+    leuchtet: Boolean
     Farbe: String[6]
     ausschalten() : void
     zeigeWeiss() : void
