@@ -159,8 +159,8 @@ class GeldbetragStatusAnzeige{
 }
 
 class BedienAnzeigePanel{
-    öffne() : void
-    schliesse() : void
+    öffnen() : void
+    schliessen() : void
     hinzufuegenMuenze(münzWert: Fixed [1,2], Anzahl: Integer) : Integer
     anzeigenGesamtwarenWert() : Double
     ausgebenStatistik(wahrenbezeichnung: String, Datum: Date) : UInteger
