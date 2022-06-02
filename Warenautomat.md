@@ -90,6 +90,7 @@ class Automat {
     einwerfen() : void
     zeigeGesamtbetrag(Gesamtbetrag: Double) : void
     prüfeSchiebetürenGeschlossen() : Boolean
+    gibGesamtWarenWert() : Double
 }
 
 class Drehteller {
@@ -102,6 +103,7 @@ class Drehteller {
     drehen() : void
     Drehteller(in AktuellesFach: Fach)
     gibGesamtwarenWert() : Double
+    berechneAktuellenWarenwert(Double) : Double
 }
 
 
@@ -115,7 +117,7 @@ class Ware {
     Preis: Double
     Verfallsdatum: Date
     Ware(in Preis: Double, in Name: String, in Verfallsdatum: Date) : Ware
-    gibAktuellenWert() : Double
+    gibAktuellenWarenwert() : Double
     istAbgelaufen() : Boolean
 }
 
@@ -157,8 +159,8 @@ class GeldbetragStatusAnzeige{
 }
 
 class BedienAnzeigePanel{
-    öffnePanel() : void
-    schliessePanel() : void
+    öffne() : void
+    schliesse() : void
     hinzufuegenMuenze(münzWert: Fixed [1,2], Anzahl: Integer) : Integer
     anzeigenGesamtwarenWert() : Double
     ausgebenStatistik(wahrenbezeichnung: String, Datum: Date) : UInteger
@@ -417,34 +419,40 @@ deactivate ServicePanel
 
 mainframe ** Warenwert des Automaten berechnen V2 ANDREA NOT FINISHED **
 
-actor "Service" as Service
-participant ":BedienAnzeigePanel" as BedienAnzeigePanel
+participant ":Automat" as Automat   
+participant ":Drehteller" as Drehteller
+participant ":Fach" as Fach
 
-Service -> BedienAnzeigePanel : öffnePanel
-activate BedienAnzeigePanel
-    participant ":Automat" as Automat   
-    participant ":Drehteller" as Drehteller
-    participant ":Fach" as Fach
-    participant ":WechselgeldbestandAnzeigeGruppe" as WechselgeldbestandAnzeigeGruppe
-    BedienAnzeigePanel -> WechselgeldbestandAnzeigeGruppe : zeigeGesamtwert()
-    activate WechselgeldbestandAnzeigeGruppe
-        participant ":Ware" as Ware
-        loop Ware in Waren
-            WechselgeldbestandAnzeigeGruppe -> Ware : gibAktuellenWert()
-                activate Ware
-                WechselgeldbestandAnzeigeGruppe <-- Ware : aktuellerWert
-                note right
-                Warenwert abgelaufener Ware ist
-                um 75% reduziert. Der Preis
-                wird auf 10 Rappen gerundet.
-                end note
-                deactivate Ware
-            WechselgeldbestandAnzeigeGruppe -> WechselgeldbestandAnzeigeGruppe : add(aktuellerWert)
-                activate WechselgeldbestandAnzeigeGruppe
-                deactivate WechselgeldbestandAnzeigeGruppe
-        end
-    deactivate WechselgeldbestandAnzeigeGruppe
-deactivate BedienAnzeigePanel
+activate Automat
+    Automat -> Automat : zeigeGesamtbetrag(): Double
+    activate Automat
+        loop Drehteller <= 7
+            Automat -> Drehteller : gibGesamtWert(): Double
+            participant ":Ware" as Ware
+            activate Drehteller
+                loop Fach <= 16
+                    Drehteller -> Fach : gibWare(): Ware
+                    activate Fach
+                    deactivate Fach
+                    loop Wenn Ware in Fach vorhanden
+                        Drehteller -> Ware : gibAktuellenWarenwert: Double
+                        activate Ware
+                        deactivate Ware
+                        note right
+                            Warenwert abgelaufener Ware ist
+                            um 75% reduziert und auf 10 Rappen gerundet.
+                            end note
+                        Drehteller -> Drehteller : berechneAktuelleWarenwert(Double, istAbgelaufen)
+                    end
+                        activate Drehteller
+                        deactivate Drehteller     
+
+                end 
+            deactivate Drehteller      
+        end   
+    deactivate Automat     
+deactivate Automat 
+
 
 @enduml
 ```
