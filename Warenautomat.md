@@ -90,6 +90,7 @@ class Automat {
     einwerfen() : void
     zeigeGesamtbetrag(Gesamtbetrag: Double) : void
     prüfeSchiebetürenGeschlossen() : Boolean
+    gibGesamtWarenWert() : Double
 }
 
 class Drehteller {
@@ -102,6 +103,7 @@ class Drehteller {
     drehen() : void
     Drehteller(in AktuellesFach: Fach)
     gibGesamtwarenWert() : Double
+    berechneAktuellenWarenwert(Double) : Double
 }
 
 
@@ -115,7 +117,7 @@ class Ware {
     Preis: Double
     Verfallsdatum: Date
     Ware(in Preis: Double, in Name: String, in Verfallsdatum: Date) : Ware
-    gibAktuellenWert() : Double
+    gibAktuellenWarenwert() : Double
     istAbgelaufen() : Boolean
 }
 
@@ -405,6 +407,52 @@ activate ServicePanel
         end
     deactivate WechselgeldbestandAnzeigeGruppe
 deactivate ServicePanel
+
+@enduml
+```
+
+
+#### b) Warenwert des Automaten berechnen (V2 ANDREA)
+
+```plantuml
+@startuml
+
+mainframe ** Warenwert des Automaten berechnen V2 ANDREA NOT FINISHED **
+
+participant ":Automat" as Automat   
+participant ":Drehteller" as Drehteller
+participant ":Fach" as Fach
+
+activate Automat
+    Automat -> Automat : zeigeGesamtbetrag(): Double
+    activate Automat
+        loop Drehteller <= 7
+            Automat -> Drehteller : gibGesamtWert(): Double
+            participant ":Ware" as Ware
+            activate Drehteller
+                loop Fach <= 16
+                    Drehteller -> Fach : gibWare(): Ware
+                    activate Fach
+                    deactivate Fach
+                    loop Wenn Ware in Fach vorhanden
+                        Drehteller -> Ware : gibAktuellenWarenwert: Double
+                        activate Ware
+                        deactivate Ware
+                        note right
+                            Warenwert abgelaufener Ware ist
+                            um 75% reduziert und auf 10 Rappen gerundet.
+                            end note
+                        Drehteller -> Drehteller : berechneAktuelleWarenwert(Double, istAbgelaufen)
+                    end
+                        activate Drehteller
+                        deactivate Drehteller     
+
+                end 
+            deactivate Drehteller      
+        end   
+    deactivate Automat     
+deactivate Automat 
+
 
 @enduml
 ```
