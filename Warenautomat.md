@@ -157,8 +157,8 @@ class GeldbetragStatusAnzeige{
 }
 
 class BedienAnzeigePanel{
-    öffnen() : void
-    schliessen() : void
+    öffnePanel() : void
+    schliessePanel() : void
     hinzufuegenMuenze(münzWert: Fixed [1,2], Anzahl: Integer) : Integer
     anzeigenGesamtwarenWert() : Double
     ausgebenStatistik(wahrenbezeichnung: String, Datum: Date) : UInteger
@@ -405,6 +405,46 @@ activate ServicePanel
         end
     deactivate WechselgeldbestandAnzeigeGruppe
 deactivate ServicePanel
+
+@enduml
+```
+
+
+#### b) Warenwert des Automaten berechnen (V2 ANDREA)
+
+```plantuml
+@startuml
+
+mainframe ** Warenwert des Automaten berechnen V2 ANDREA NOT FINISHED **
+
+actor "Service" as Service
+participant ":BedienAnzeigePanel" as BedienAnzeigePanel
+
+Service -> BedienAnzeigePanel : öffnePanel
+activate BedienAnzeigePanel
+    participant ":Automat" as Automat   
+    participant ":Drehteller" as Drehteller
+    participant ":Fach" as Fach
+    participant ":WechselgeldbestandAnzeigeGruppe" as WechselgeldbestandAnzeigeGruppe
+    BedienAnzeigePanel -> WechselgeldbestandAnzeigeGruppe : zeigeGesamtwert()
+    activate WechselgeldbestandAnzeigeGruppe
+        participant ":Ware" as Ware
+        loop Ware in Waren
+            WechselgeldbestandAnzeigeGruppe -> Ware : gibAktuellenWert()
+                activate Ware
+                WechselgeldbestandAnzeigeGruppe <-- Ware : aktuellerWert
+                note right
+                Warenwert abgelaufener Ware ist
+                um 75% reduziert. Der Preis
+                wird auf 10 Rappen gerundet.
+                end note
+                deactivate Ware
+            WechselgeldbestandAnzeigeGruppe -> WechselgeldbestandAnzeigeGruppe : add(aktuellerWert)
+                activate WechselgeldbestandAnzeigeGruppe
+                deactivate WechselgeldbestandAnzeigeGruppe
+        end
+    deactivate WechselgeldbestandAnzeigeGruppe
+deactivate BedienAnzeigePanel
 
 @enduml
 ```
