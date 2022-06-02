@@ -86,123 +86,122 @@ skinparam classAttributeFontSize 15
 skinparam arrowFontSize 20
 
 class Automat {
-    drehen(): void
-    einwerfen() : void
-    zeigeGesamtbetrag(Gesamtbetrag: Double) : void
-    prüfeSchiebetürenGeschlossen() : Boolean
-    gibGesamtWarenWert() : Double
+    +drehen(): void
+    +einwerfen() : void
+    +zeigeGesamtbetrag(Gesamtbetrag: Double) : void
+    +prüfeSchiebetürenGeschlossen() : Boolean
+    +gibGesamtWarenWert() : Double
 }
 
 class Drehteller {
-    istOffen: Boolean
-    öffnen(): Boolean
-    entriegeln(): void
-    schliessen(): void
-    AktuellesFach: Fach
-    neueWareVonBarcodeLeser(Warenname: String, Preis: Fixed(2,2), Verfallsdatum: Date): void
-    drehen() : void
-    Drehteller(in AktuellesFach: Fach)
-    gibGesamtwarenWert() : Double
-    berechneAktuellenWarenwert(Double) : Double
+    -istOffen: Boolean
+    +öffnen(): Boolean
+    +entriegeln(): void
+    +schliessen(): void
+    -aktuellesFach: Fach
+    +neueWareVonBarcodeLeser(Warenname: String, Preis: Fixed(2,2), Verfallsdatum: Date): void
+    +drehen() : void
+    +Drehteller(in AktuellesFach: Fach)
+    +berechneAktuellenWarenwert(Double) : Double
 }
 
 
 class Fach {
-    LinkerNachbar: Fach
-    Fach(in LinkerNachbar: Fach)
+    +linkerNachbar: Fach
+    +Fach(in LinkerNachbar: Fach)
 }
 
 class Ware {
-    Name: String
-    Preis: Double
-    Verfallsdatum: Date
-    Ware(in Preis: Double, in Name: String, in Verfallsdatum: Date) : Ware
-    gibAktuellenWarenwert() : Double
-    istAbgelaufen() : Boolean
+    -name: String
+    -preis: Double
+    -verfallsdatum: Date
+    +Ware(in Preis: Double, in Name: String, in Verfallsdatum: Date) : Ware
+    +gibAktuellenWarenwert() : Double
+    +istAbgelaufen() : Boolean
 }
 
 class Kaufeintrag {
-    Ware: Ware
-    Verkaufsdatum: Date
-    Kaufeintrag(in Ware: Ware, in Verkaufsdatum: Date)
+    -ware: Ware
+    -verkaufsdatum: Date
+    +Kaufeintrag(in Ware: Ware, in Verkaufsdatum: Date)
 }
 
 class Kasse {
-    Gesamtbetrag: Double
-    setzteAnzahlEingeworfen() : void
-    einwerfen(Fixed [1,2]) : Boolean
-    prüfeEingeworfeneMünze() : Boolean
-    gibGeldZurück() : void
-    prüfeKaufOk(Ware: Ware) : Boolean
+    -gesamtbetrag: Double
+    +setzteAnzahlEingeworfen() : void
+    +einwerfen(Fixed [1,2]) : Boolean
+    +prüfeEingeworfeneMünze() : Boolean
+    +gibGeldZurück() : void
+    +prüfeKaufOk(Ware: Ware) : Boolean
 }
 
 class MuenzSaeule {
-    Wert : Fixed [1,2]
-    AnzahlEingeworfen: UInteger
-    Anzahl : UInteger
-    addiereMünze() : Boolean
-    setzeAnzahlEingeworfen() : void
+    -wert : Fixed [1,2]
+    +anzahlEingeworfen: UInteger
+    -anzahl : UInteger
+    +addiereMünze() : Boolean
+    +setzeAnzahlEingeworfen() : void
 }
 
 class Drehtelleranzeige {
-    Preis: Anzeige
-    Warenzustand: Lampe
-    anzeigen(Ware) : void
+    -preis: Anzeige
+    -warenzustand: Lampe
+    +anzeigen(Ware) : void
 }
 
 class GeldbetragStatusAnzeige{
-    Geldbetrag: Anzeige
-    StatusWechselgeld: Lampe
-    StatusGenugGeld: Lampe
-    zurueckgebenGeld() : void
-    zeigeGesamtbetrag(Gesamtbetrag: Double) : void
+    -geldbetrag: Anzeige
+    -statusWechselgeld: Lampe
+    -statusGenugGeld: Lampe
+    -zurueckgebenGeld() : void
+    +zeigeGesamtbetrag(Gesamtbetrag: Double) : void
 }
 
 class BedienAnzeigePanel{
-    öffnen() : void
-    schliessen() : void
-    hinzufuegenMuenze(münzWert: Fixed [1,2], Anzahl: Integer) : Integer
-    anzeigenGesamtwarenWert() : Double
-    ausgebenStatistik(wahrenbezeichnung: String, Datum: Date) : UInteger
+    +öffnen() : void
+    +schliessen() : void
+    +hinzufuegenMuenze(münzWert: Fixed [1,2], Anzahl: Integer) : Integer
+    +anzeigenGesamtwarenWert() : Double
+    +ausgebenStatistik(wahrenbezeichnung: String, Datum: Date) : UInteger
 }
 
 abstract "AnzeigeGruppe {abstract}"{
-    Anzeige1: Anzeige
-    Anzeige2: Anzeige
-    Anzeige3: Anzeige
+    -anzeige1: Anzeige
+    -anzeige2: Anzeige
+    -anzeige3: Anzeige
 }
 
 class Anzeige{
-    Text: String
-    anzeigen(Text: String)
+    -text: String
+    +anzeigen(Text: String)
 }
 
 class Lampe {
-    Leuchtet: Boolean
-    Farbe: String[6]
-    ausschalten() : void
-    zeigeWeiss() : void
-    zeigeGrün() : void
-    zeigeRot() : void
+    -leuchtet: Boolean
+    -farbe: String[6]
+    +ausschalten() : void
+    +zeigeWeiss() : void
+    +zeigeGrün() : void
+    +zeigeRot() : void
 
 }
 
 
 class WechselgeldbestandAnzeigeGruppe{
-    zeigeWertVerkaufteWare(wert: Fixed[5,2]): void
-    zeigeMuenzArt(wert: int): void
-    zeigeAnzahl(anzahl: int): void
-    zeigeGesamtwert(Gesamtbetrag: Double) : void
+    +zeigeWertVerkaufteWare(wert: Fixed[5,2]): void
+    +zeigeMuenzArt(wert: int): void
+    +zeigeAnzahl(anzahl: int): void
+    +zeigeGesamtwert(Gesamtbetrag: Double) : void
 }
 
 class WarenVerwaltungAnzeigeGruppe{
-    zeigeWare(ware: Ware)
+    +zeigeWare(ware: Ware)
 }
 
 class VerkaufserfolgAnzeigeGruppe {
-    zeigeWare(ware: Ware) : void
-    zeigeDatumPer(datum: Date) : void
-    zeigeAnzahl() : void
+    +zeigeWare(ware: Ware) : void
+    +zeigeDatumPer(datum: Date) : void
+    +zeigeAnzahl() : void
 }
 
 Automat "1" -- "7" Drehteller
@@ -439,8 +438,8 @@ activate Automat
                         activate Ware
                         deactivate Ware
                         note right
-                            Warenwert abgelaufener Ware ist
-                            um 75% reduziert und auf 10 Rappen gerundet.
+                            Es wird geprüft, ob Ware abgelaufen ist. Wenn ja,
+                            wird Warenwert um 75% reduziert und auf 10 Rappen gerundet.
                             end note
                         Drehteller -> Drehteller : berechneAktuelleWarenwert(Double, istAbgelaufen)
                     end
